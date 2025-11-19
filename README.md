@@ -21,7 +21,7 @@ Future support for other disc-based consoles may be considered if there is enoug
     <td align="center">Desktop Library</td>
   </tr>
   <tr>
-    <td><img src="screenshots/monitor.jpg" alt="Main application interface" width="280"></td>
+    <td><img src="screenshots/monitor.png" alt="Main application interface" width="280"></td>
     <td><img src="screenshots/Steam_big_picture.png" alt="Shortcut in Big Picture Mode" width="280"></td>
     <td><img src="screenshots/Steam_desktop_mode.png" alt="Shortcut in Desktop Library" width="280"></td>
   </tr>
