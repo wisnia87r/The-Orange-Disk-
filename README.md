@@ -26,9 +26,9 @@ Future support for other disc-based consoles may be considered if there is enoug
 - **EmuDeck**: **This is a mandatory requirement.** The application is designed to work with the emulators (DuckStation, PCSX2) and folder structure provided by [EmuDeck](https://www.emudeck.com/). Ripped games are saved directly to EmuDeck's `roms` directory.
 - **External USB Optical Drive**: A compatible USB CD/DVD/Blu-ray drive is required to read game discs.
 
-## Installation (The Right Way)
+## Installation (Easy Method)
 
-1.  **Download the Installer**: Go to the [**Releases**](https://github.com/wisnia87r/The-Orange-Disk-/releases) page and download the `install-online.sh` file to your Desktop or Downloads folder.
+1.  **Download the Installer**: Go to the [**Releases**](https://github.com/wisnia87r/The-Orange-Disk-/releases) page on the right and download the `install-online.sh` file from the latest release.
 2.  **Open a Terminal**: **Do not double-click the file.** Instead, open the application launcher and start a terminal (Konsole).
 3.  **Navigate to the File's Location**: Use the `cd` command to go to the folder where you saved the file. For example:
     ```bash
@@ -44,6 +44,13 @@ Future support for other disc-based consoles may be considered if there is enoug
     ```
 5.  **Follow the On-Screen Instructions**: The script will download the latest version of the application and run the main installer. After it's done, you can close the terminal.
 6.  **Launch Steam**: Start Steam. The shortcut "The Orange Disk Playstation Edition" will be in your library, fully configured.
+
+## ❤️ Support the Project
+
+If you find this application useful and want to support its development, you can buy me a coffee! Every donation is highly appreciated and helps motivate further improvements.
+
+-   **[Sponsor on GitHub](https://github.com/sponsors/wisnia87r)** (Recommended)
+-   **[Buy me a coffee on Ko-fi](https://https://ko-fi.com/wisnia87r)** (Replace with your link)
 
 ## How to Use
 
