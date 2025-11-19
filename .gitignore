@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+*.egg-info/
+
+# Log and debug files
+*.log
+debug_apps.txt
+
+# User configuration
+.the_orange_disk.conf
+
+# IDE configuration files
+.idea/
+.vscode/
