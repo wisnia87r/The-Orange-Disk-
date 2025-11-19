@@ -14,9 +14,18 @@ Future support for other disc-based consoles may be considered if there is enoug
 
 ## Screenshots
 
-| Main Interface | Big Picture Mode | Desktop Library |
-|:---:|:---:|:---:|
-| ![Main application interface running on the device](screenshots/monitor.jpg) | ![The shortcut shown in Steam's Big Picture Mode](screenshots/Steam_big_picture.png) | ![The shortcut with artwork in the Steam Desktop library](screenshots/Steam_desktop_mode.png) |
+<table>
+  <tr>
+    <td align="center">Main Interface</td>
+    <td align="center">Big Picture Mode</td>
+    <td align="center">Desktop Library</td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/monitor.jpg" alt="Main application interface" width="280"></td>
+    <td><img src="screenshots/Steam_big_picture.png" alt="Shortcut in Big Picture Mode" width="280"></td>
+    <td><img src="screenshots/Steam_desktop_mode.png" alt="Shortcut in Desktop Library" width="280"></td>
+  </tr>
+</table>
 
 ## Features
 
