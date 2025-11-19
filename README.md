@@ -12,6 +12,12 @@ This is an early development version created by a passionate hobbyist in their f
 
 Future support for other disc-based consoles may be considered if there is enough community interest and as time and resources permit. Your feedback and contributions are highly appreciated!
 
+## Screenshots
+
+| Main Interface | Big Picture Mode | Desktop Library |
+|:---:|:---:|:---:|
+| ![Main application interface running on the device](screenshots/monitor.jpg) | ![The shortcut shown in Steam's Big Picture Mode](screenshots/Steam_big_picture.png) | ![The shortcut with artwork in the Steam Desktop library](screenshots/Steam_desktop_mode.png) |
+
 ## Features
 
 - **Play Directly from Disc**: Launch PS1 (DuckStation) or PS2 (PCSX2) games directly from the disc.
@@ -49,8 +55,8 @@ Future support for other disc-based consoles may be considered if there is enoug
 
 If you find this application useful and want to support its development, you can buy me a coffee! Every donation is highly appreciated and helps motivate further improvements.
 
--   **[Sponsor on GitHub](https://github.com/sponsors/wisnia87r)
--   **[Buy me a coffee on Ko-fi](https://ko-fi.com/wisnia87r)
+-   **[Sponsor on GitHub](https://github.com/sponsors/wisnia87r)** (Recommended)
+-   **[Buy me a coffee on Ko-fi](https://ko-fi.com/your_username)** (Replace with your link)
 
 ## How to Use
 
