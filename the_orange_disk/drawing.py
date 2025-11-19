@@ -3,9 +3,9 @@
 # This file contains all the drawing logic for the user interface.
 
 import pygame
-import time # OSTATECZNA POPRAWKA: Dodano brakujący import
+import time
 import math
-from .config import * # Import all constants and colors
+from .config import *
 
 class Drawing:
     def __init__(self, app_instance):
@@ -46,7 +46,6 @@ class Drawing:
             self.app.screen.blit(self.app.bg_image, (0, 0))
         else:
             self.app.screen.fill(PS2_VOID_DARK)
-        # Title Bar
         pygame.draw.rect(self.app.screen, (0, 0, 0, 150), (0, 0, INTERNAL_WIDTH, 80))
         pygame.draw.line(self.app.screen, (100, 100, 150), (0, 80), (INTERNAL_WIDTH, 80), 1)
         self.draw_text_shadow("The Orange Disk", self.app.font_title, PS2_TEXT_BRIGHT, (INTERNAL_WIDTH // 2 - 100, 40), shadow_offset=2)
@@ -148,16 +147,54 @@ class Drawing:
         self.draw_text_shadow(self.app.get_string("SETTINGS_BACK"), self.app.font_small, PS2_TEXT, (INTERNAL_WIDTH // 2 + 20, footer_y))
 
     def draw_keyboard_state(self):
-        # ... (drawing logic is fine, no changes needed)
-        pass
+        """Draws the on-screen keyboard."""
+        self.draw_text_shadow(self.app.message_text, self.app.font_small, PS1_ORANGE, (INTERNAL_WIDTH // 2, 150))
+        pygame.draw.rect(self.app.screen, (0, 0, 0), (INTERNAL_WIDTH // 2 - 300, 200, 600, 50))
+        pygame.draw.rect(self.app.screen, PS2_TEXT, (INTERNAL_WIDTH // 2 - 300, 200, 600, 50), 2)
+        display_text = self.app.keyboard_input
+        if "hasło" in self.app.message_text.lower() or "password" in self.app.message_text.lower():
+            display_text = "*" * len(self.app.keyboard_input)
+        if (self.app.frame_count // 15) % 2 == 0: display_text += "_"
+        self.draw_text_shadow(display_text, self.app.font_med, PS2_TEXT, (INTERNAL_WIDTH // 2, 225))
+
+        start_y, key_size, gap = 300, 60, 10
+        current_layout = self.app.kb_layouts[self.app.kb_current_mode]
+        total_width = len(current_layout[0]) * (key_size + gap)
+        start_x = (INTERNAL_WIDTH - total_width) // 2
+
+        for r, row_keys in enumerate(current_layout):
+            for c, key in enumerate(row_keys):
+                x, y = start_x + c * (key_size + gap), start_y + r * (key_size + gap)
+                is_active = (r == self.app.kb_row and c == self.app.kb_col)
+                bg_color = self.get_pulse_color() if is_active else (40, 40, 60)
+                if key == "SHIFT" and self.app.kb_current_mode == "upper": bg_color = PS1_GREEN
+                txt_color = (0, 0, 0) if is_active else PS2_TEXT
+                pygame.draw.rect(self.app.screen, bg_color, (x, y, key_size, key_size))
+                pygame.draw.rect(self.app.screen, (100, 100, 150), (x, y, key_size, key_size), 2)
+                font = self.app.font_small if len(key) < 3 else pygame.font.SysFont("sans", 16, bold=True)
+                txt = font.render(key, True, txt_color)
+                self.app.screen.blit(txt, txt.get_rect(center=(x + key_size // 2, y + key_size // 2)))
 
     def draw_loading_state(self):
-        # ... (drawing logic is fine, no changes needed)
-        pass
+        """Draws the progress bar screen."""
+        self.draw_text_shadow(self.app.loading_text, self.app.font_med, PS2_TEXT, (INTERNAL_WIDTH // 2, INTERNAL_HEIGHT // 2 - 100))
+        bar_width, bar_height = 600, 40
+        bar_x, bar_y = (INTERNAL_WIDTH - bar_width) // 2, INTERNAL_HEIGHT // 2
+        pygame.draw.rect(self.app.screen, (0, 0, 0), (bar_x, bar_y, bar_width, bar_height))
+        pygame.draw.rect(self.app.screen, PS2_TEXT, (bar_x, bar_y, bar_width, bar_height), 3)
+        filled_width = int((self.app.progress_percent / 100) * bar_width)
+        if filled_width > 0:
+            pygame.draw.rect(self.app.screen, self.get_pulse_color(), (bar_x, bar_y, filled_width, bar_height))
+        self.draw_text_shadow(self.app.progress_text, self.app.font_small, PS2_TEXT, (INTERNAL_WIDTH // 2, INTERNAL_HEIGHT // 2 + 70))
+        if "Zgrywanie" in self.app.loading_text or "Ripping" in self.app.loading_text:
+            self.draw_button_icon("CIRCLE", INTERNAL_WIDTH // 2 - 60, INTERNAL_HEIGHT - 100)
+            self.draw_text_shadow(self.app.get_string("CANCEL_BUTTON"), self.app.font_small, (150, 150, 150), (INTERNAL_WIDTH // 2, INTERNAL_HEIGHT - 100))
 
     def draw_message_state(self, title_key, title_color):
-        # ... (drawing logic is fine, no changes needed)
-        pass
+        """Draws a success or error message screen."""
+        self.draw_text_shadow(self.app.get_string(title_key), self.app.font_title, title_color, (INTERNAL_WIDTH // 2, INTERNAL_HEIGHT // 2 - 50))
+        self.draw_text_shadow(self.app.message_text, self.app.font_small, PS2_TEXT, (INTERNAL_WIDTH // 2, INTERNAL_HEIGHT // 2 + 50))
+        self.draw_text_shadow(self.app.get_string("CONFIRM_BUTTON"), self.app.font_small, (150, 150, 150), (INTERNAL_WIDTH // 2, INTERNAL_HEIGHT - 100))
 
     def draw_frame(self):
         """The main drawing function, called every frame."""
@@ -175,7 +212,6 @@ class Drawing:
             elif self.app.state == "MESSAGE": self.draw_message_state("SUCCESS_TITLE", PS1_GREEN)
             elif self.app.state == "ERROR": self.draw_message_state("ERROR_TITLE", PS1_RED)
 
-        # Scale the internal surface to the real screen resolution
         scale = min(self.app.real_width / INTERNAL_WIDTH, self.app.real_height / INTERNAL_HEIGHT)
         new_w, new_h = int(INTERNAL_WIDTH * scale), int(INTERNAL_HEIGHT * scale)
         scaled_surf = pygame.transform.smoothscale(self.app.screen, (new_w, new_h))

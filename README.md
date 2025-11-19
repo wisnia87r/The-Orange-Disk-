@@ -26,16 +26,24 @@ Future support for other disc-based consoles may be considered if there is enoug
 - **EmuDeck**: **This is a mandatory requirement.** The application is designed to work with the emulators (DuckStation, PCSX2) and folder structure provided by [EmuDeck](https://www.emudeck.com/). Ripped games are saved directly to EmuDeck's `roms` directory.
 - **External USB Optical Drive**: A compatible USB CD/DVD/Blu-ray drive is required to read game discs.
 
-## Installation (Easy Method)
+## Installation (The Right Way)
 
-1.  **Download the Installer**: Go to the [**Releases**](https://github.com/wisnia87r/The-Orange-Disk-/releases) page on the right and download the `install-online.sh` file from the latest release.
-2.  **Run the Installer**: Place the downloaded file in any folder (e.g., your Desktop), open a terminal, and run it:
+1.  **Download the Installer**: Go to the [**Releases**](https://github.com/wisnia87r/The-Orange-Disk-/releases) page and download the `install-online.sh` file to your Desktop or Downloads folder.
+2.  **Open a Terminal**: **Do not double-click the file.** Instead, open the application launcher and start a terminal (Konsole).
+3.  **Navigate to the File's Location**: Use the `cd` command to go to the folder where you saved the file. For example:
     ```bash
+    cd ~/Desktop
+    ```
+4.  **Run the Installer from the Terminal**: Type the following two commands, pressing Enter after each one:
+    ```bash
+    # This first command makes the script executable
     chmod +x install-online.sh
+
+    # This second command runs the script
     ./install-online.sh
     ```
-3.  **Follow the On-Screen Instructions**: The script will download the latest version of the application and run the main installer.
-4.  **Launch Steam**: After the installation is complete, start Steam. The shortcut "The Orange Disk Playstation Edition" will be in your library, fully configured with all artwork.
+5.  **Follow the On-Screen Instructions**: The script will download the latest version of the application and run the main installer. After it's done, you can close the terminal.
+6.  **Launch Steam**: Start Steam. The shortcut "The Orange Disk Playstation Edition" will be in your library, fully configured.
 
 ## How to Use
 

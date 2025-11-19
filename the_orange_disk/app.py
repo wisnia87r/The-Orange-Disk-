@@ -9,9 +9,9 @@ import time
 import os
 import threading
 import gc
+import fcntl
 from queue import Queue
 
-# POPRAWKA: Importujemy CONFIG_PATH, którego brakowało
 from .config import *
 from .backend import *
 from .animations import Spark, Orb
@@ -48,6 +48,11 @@ class TheOrangeDiskApp:
         self.drive_path = None
         self.last_drive_check = 0
 
+        # OSTATECZNA POPRAWKA: Przywrócenie brakujących zmiennych klawiatury
+        self.kb_row = 1
+        self.kb_col = 0
+        self.kb_current_mode = "lower"
+
         # --- Threading & Animation ---
         self.action_queue = Queue()
         self.boot_anim_timer = time.time()
@@ -57,7 +62,7 @@ class TheOrangeDiskApp:
 
         # --- Language & Settings ---
         self.translations = TRANSLATIONS
-        self.current_lang = "EN" # Default to English for first launch
+        self.current_lang = "EN" # Default to English
         self.load_settings()
 
         # --- Modules ---
@@ -161,7 +166,7 @@ class TheOrangeDiskApp:
             if self.state in ("MENU", "SETTINGS", "HOW_TO", "ABOUT"): self.check_drive_status_async()
             self.process_action_queue()
             self.handle_events()
-            self.drawing.draw_frame() # Use the drawing module
+            self.drawing.draw_frame()
             self.clock.tick(30)
             self.frame_count += 1
         self.close_gui()
@@ -236,8 +241,26 @@ class TheOrangeDiskApp:
         elif self.state in ["HOW_TO", "ABOUT"]:
             if is_back or is_enter: self.state = "MENU"
         elif self.state == "KEYBOARD":
-            # ... (keyboard logic)
-            pass
+            current_layout = self.kb_layouts[self.kb_current_mode]
+            if dy != 0:
+                self.kb_row = (self.kb_row + dy) % len(current_layout)
+                self.kb_col = min(self.kb_col, len(current_layout[self.kb_row]) - 1)
+            if dx != 0:
+                self.kb_col = (self.kb_col + dx) % len(current_layout[self.kb_row])
+
+            if is_enter:
+                key = current_layout[self.kb_row][self.kb_col]
+                if key == "SPACE": self.keyboard_input += " "
+                elif key == "DEL": self.keyboard_input = self.keyboard_input[:-1]
+                elif key == "ENTER":
+                    callback = self.keyboard_callback
+                    self.keyboard_callback = None
+                    callback(self.keyboard_input)
+                elif key == "SHIFT":
+                    self.kb_current_mode = "upper" if self.kb_current_mode == "lower" else "lower"
+                else:
+                    self.keyboard_input += key
+            if is_back: self.state = "MENU"
         elif self.state == "LOADING":
             if is_back:
                 self.cancel_ripping = True
@@ -321,7 +344,6 @@ class TheOrangeDiskApp:
         force_unmount(self.drive_path)
         time.sleep(1)
         
-        # OSTATECZNA POPRAWKA: Minimalizuj okno zamiast zamykać GUI
         pygame.display.iconify()
 
         cmd = emulator_cmd.split() + [self.drive_path]
@@ -335,8 +357,188 @@ class TheOrangeDiskApp:
         except Exception as e:
             log(f"Error launching game: {e}")
 
-        # Po zakończeniu gry, przywróć stan aplikacji
-        # Nie ma potrzeby ponownej inicjalizacji, bo nic nie zamykaliśmy
         self.state = "MENU"
+
+    def start_ripping_flow(self):
+        self.action_queue.put(("START_KEYBOARD", {
+            "key": "GAME_NAME_PROMPT",
+            "callback": self.on_game_name_ready
+        }))
+
+    def on_game_name_ready(self, name):
+        self.game_name = name if name else "Unknown"
+        self.action_queue.put(("SET_LOADING_TEXT", {"key": "DETECTING_DISC"}))
+        threading.Thread(target=self.rip_detection_worker, daemon=True).start()
+
+    def rip_detection_worker(self):
+        try:
+            self.disc_sectors, file_list_upper = get_disc_info(self.drive_path)
+            self.disc_type = detect_disc_type(self.disc_sectors, file_list_upper)
+        except Exception as e:
+            self.action_queue.put(("SHOW_ERROR", str(e)))
+            return
+        if self.disc_type == "UNKNOWN":
+            self.action_queue.put(("SHOW_ERROR", "DISC_TYPE_UNKNOWN"))
+            return
+        if self.disc_type == "PS1_CD":
+            self.save_path = get_emudeck_rom_path("psx")
+            if not check_tool_installed("cdrdao"):
+                self.action_queue.put(("SHOW_ERROR", "RIP_PSX_NO_CDRDAO"))
+                return
+            self.start_ripping_thread()
+        elif self.disc_type in ("PS2_CD", "PS2_DVD"):
+            self.save_path = get_emudeck_rom_path("ps2")
+            self.start_ripping_thread()
+
+    def start_ripping_thread(self):
+        self.action_queue.put(("SET_LOADING_TEXT", {"key": "RIP_STARTING", "kwargs": {"game_name": self.game_name}}))
+        self.progress_percent, self.rip_total_seconds, self.rip_total_bytes = 0.0, 1, 1
+        self.progress_text = self.get_string("RIP_PROGRESS_START")
+        self.cancel_ripping = False
+        if self.disc_type in ("PS2_CD", "PS2_DVD"):
+            self.rip_total_bytes = max(1, self.disc_sectors * 2048)
+        threading.Thread(target=self.ripping_worker, daemon=True).start()
+
+    def parse_rip_progress(self, line):
+        log(f"RIP_PARSE: {line}")
+        try:
+            if self.disc_type == "PS1_CD":
+                match_total = re.search(r"^\s*\d+\s+DATA\s+.*?\s+(\d{2}):(\d{2}):\d{2}\(\d+\)$", line.strip())
+                if match_total:
+                    self.rip_total_seconds = max(1, (int(match_total.group(1)) * 60) + int(match_total.group(2)))
+                    return
+                match_current = re.search(r"^(\d{2}):(\d{2}):\d{2}", line.strip())
+                if match_current:
+                    curr_m, curr_s = int(match_current.group(1)), int(match_current.group(2))
+                    percent = min(100, ((curr_m * 60) + curr_s) / self.rip_total_seconds * 100)
+                    total_m, total_s = divmod(self.rip_total_seconds, 60)
+                    self.action_queue.put(("UPDATE_PROGRESS", {"percent": percent, "text_key": "RIP_PROGRESS_TIME", "kwargs": {"curr_m": curr_m, "curr_s": curr_s, "total_m": total_m, "total_s": total_s}}))
+            else:
+                match_bytes = re.search(r"(\d+)\s+bytes", line)
+                if match_bytes:
+                    current_bytes = int(match_bytes.group(1))
+                    percent = min(100, (current_bytes / self.rip_total_bytes) * 100)
+                    curr_mb, total_mb = int(current_bytes / 1024 / 1024), int(self.rip_total_bytes / 1024 / 1024)
+                    self.action_queue.put(("UPDATE_PROGRESS", {"percent": percent, "text_key": "RIP_PROGRESS_SIZE", "kwargs": {"curr_mb": curr_mb, "total_mb": total_mb}}))
+        except Exception as e:
+            log(f"Error parsing rip progress: {e}")
+
+    def ripping_worker(self):
+        force_unmount(self.drive_path)
+        file_ext = "iso" if self.disc_type in ("PS2_CD", "PS2_DVD") else "bin"
+        main_file = os.path.join(self.save_path, f"{self.game_name}.{file_ext}")
+        toc_file = os.path.join(self.save_path, f"{self.game_name}.toc")
+        cue_file = os.path.join(self.save_path, f"{self.game_name}.cue")
+        try:
+            if self.disc_type == "PS1_CD":
+                cmd = ["stdbuf", "-e0", "cdrdao", "read-cd", "--read-raw", "--datafile", main_file, "--device", self.drive_path, "--driver", "generic-mmc:0x20000", toc_file]
+            else:
+                cmd = ["stdbuf", "-e0", "dd", f"if={self.drive_path}", f"of={main_file}", "bs=2048", "status=progress"]
+            if is_sandboxed(): cmd = ["flatpak-spawn", "--host"] + cmd
+            self.rip_process = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.DEVNULL)
+            if self.rip_process.stderr:
+                fd = self.rip_process.stderr.fileno()
+                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+                line_buffer = b""
+                while True:
+                    if self.cancel_ripping: break
+                    try: byte_chunk = self.rip_process.stderr.read(128)
+                    except (IOError, OSError):
+                        if self.rip_process.poll() is not None: break
+                        time.sleep(0.1)
+                        continue
+                    if not byte_chunk:
+                        if self.rip_process.poll() is not None: break
+                        else: time.sleep(0.1); continue
+                    line_buffer += byte_chunk
+                    while b'\r' in line_buffer or b'\n' in line_buffer:
+                        split_char = b'\r' if b'\r' in line_buffer else b'\n'
+                        if split_char == b'\r' and b'\n' in line_buffer: split_char = b'\n' if line_buffer.find(b'\n') < line_buffer.find(b'\r') else b'\r'
+                        line_bytes, line_buffer = line_buffer.split(split_char, 1)
+                        self.parse_rip_progress(line_bytes.decode('utf-8', errors='replace'))
+            exit_code = self.rip_process.wait()
+            if self.cancel_ripping: return
+            if exit_code != 0: raise Exception(f"Rip process exited with code {exit_code}")
+            self.action_queue.put(("UPDATE_PROGRESS", {"text_key": "RIP_FINALIZING"}))
+            if self.disc_type == "PS1_CD":
+                try: run_host_command(["toc2cue", toc_file, cue_file])
+                except: pass
+            if not os.path.exists(main_file) or os.path.getsize(main_file) < 1000000:
+                raise Exception(self.get_string("RIP_ERROR_SMALL_FILE"))
+            self.action_queue.put(("SHOW_MESSAGE", self.get_string("RIP_SUCCESS", save_path=self.save_path)))
+        except Exception as e:
+            if not self.cancel_ripping: self.action_queue.put(("SHOW_ERROR", "RIP_ERROR_CONSOLE"))
+        finally:
+            if self.rip_process and self.rip_process.poll() is None: self.rip_process.kill(); self.rip_process.wait()
+            if self.cancel_ripping:
+                log(self.get_string("RIP_CLEANUP"))
+                try:
+                    if os.path.exists(main_file): os.remove(main_file)
+                    if os.path.exists(toc_file): os.remove(toc_file)
+                    if os.path.exists(cue_file): os.remove(cue_file)
+                except Exception as e: log(f"Error during cleanup: {e}")
+            self.rip_process, self.cancel_ripping = None, False
+            if not self.cancel_ripping and self.state == "LOADING":
+                self.action_queue.put(("SHOW_MESSAGE", self.get_string("RIP_SUCCESS", save_path=self.save_path)))
+
+    def show_error(self, msg_key):
+        self.state = "ERROR"
+        self.message_text = self.get_string(msg_key)
+
+    def show_message(self, msg_key):
+        self.state = "MESSAGE"
+        self.message_text = self.get_string(msg_key)
     
-    # ... (reszta workerów bez zmian)
+    def start_auto_fix(self):
+        self.action_queue.put(("START_KEYBOARD", {"key": "PERMS_REQUIRED", "callback": self.on_fix_password_ready}))
+
+    def on_fix_password_ready(self, password):
+        self.sudo_password = password
+        self.action_queue.put(("SET_LOADING_TEXT", {"key": "FIXING_PERMS"}))
+        threading.Thread(target=self.auto_fix_worker, daemon=True).start()
+
+    def auto_fix_worker(self):
+        try:
+            run_sudo_command("modprobe sg", self.sudo_password)
+            time.sleep(1)
+            run_sudo_command(f"sh -c 'chmod 666 {self.drive_path}'", self.sudo_password)
+            run_sudo_command("sh -c 'chmod 666 /dev/sg*'", self.sudo_password)
+            run_sudo_command("usermod -a -G optical,disk deck", self.sudo_password)
+            self.action_queue.put(("SET_LOADING_TEXT", {"key": "READY_CHECKING_TOOLS"}))
+            time.sleep(1)
+            if not check_tool_installed("isoinfo"):
+                self.action_queue.put(("START_KEYBOARD", {"key": "TOOL_NOT_FOUND", "kwargs": {"tool": "isoinfo"}, "callback": self.on_install_password_ready}))
+            else:
+                self.action_queue.put(("SET_LOADING_TEXT", {"key": "ALL_READY"}))
+                time.sleep(1)
+                if self.pending_action == "LAUNCH": self.launch_game_detection_thread()
+                elif self.pending_action == "RIP": self.action_queue.put(("EXECUTE_RIP_FLOW", None))
+                self.pending_action = None
+        except Exception as e:
+            self.action_queue.put(("SHOW_ERROR", str(e)))
+
+    def start_tool_install(self):
+        self.action_queue.put(("START_KEYBOARD", {"key": "TOOL_NOT_FOUND", "kwargs": {"tool": "isoinfo"}, "callback": self.on_install_password_ready}))
+
+    def on_install_password_ready(self, password):
+        self.sudo_password = password
+        self.action_queue.put(("SET_LOADING_TEXT", {"key": "INSTALLING_TOOL", "kwargs": {"tool": "cdrkit"}}))
+        threading.Thread(target=self.install_worker, daemon=True).start()
+
+    def install_worker(self):
+        try:
+            run_sudo_command("steamos-readonly disable", self.sudo_password)
+            run_sudo_command("pacman-key --init", self.sudo_password)
+            run_sudo_command("pacman-key --populate archlinux holo", self.sudo_password)
+            run_sudo_command("rm -f /var/cache/pacman/pkg/cdrdao*", self.sudo_password)
+            run_sudo_command("rm -f /var/cache/pacman/pkg/cdrkit*", self.sudo_password)
+            run_sudo_command("pacman -S cdrdao cdrkit --noconfirm --needed --overwrite '*'", self.sudo_password)
+            run_sudo_command("steamos-readonly enable", self.sudo_password)
+            self.action_queue.put(("SET_LOADING_TEXT", {"key": "ALL_READY"}))
+            time.sleep(1)
+            if self.pending_action == "LAUNCH": self.launch_game_detection_thread()
+            elif self.pending_action == "RIP": self.action_queue.put(("EXECUTE_RIP_FLOW", None))
+            self.pending_action = None
+        except Exception as e:
+            self.action_queue.put(("SHOW_ERROR", self.get_string("INSTALL_ERROR", e=e)))
