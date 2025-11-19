@@ -49,8 +49,8 @@ Future support for other disc-based consoles may be considered if there is enoug
 
 If you find this application useful and want to support its development, you can buy me a coffee! Every donation is highly appreciated and helps motivate further improvements.
 
--   **[Sponsor on GitHub](https://github.com/sponsors/wisnia87r)** (Recommended)
--   **[Buy me a coffee on Ko-fi](https://https://ko-fi.com/wisnia87r)** (Replace with your link)
+-   **[Sponsor on GitHub](https://github.com/sponsors/wisnia87r)
+-   **[Buy me a coffee on Ko-fi](https://ko-fi.com/wisnia87r)
 
 ## How to Use
 
