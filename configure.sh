@@ -22,31 +22,31 @@ if [ ! -f "$VENV_PYTHON_BIN" ]; then
     exit 1
 fi
 
-# Główna logika
+# Main logic
 case "$1" in
     add)
-        echo -e "${GREEN}--- Zadanie: Dodawanie/Aktualizowanie skrótu ---${NC}"
+        echo -e "${GREEN}--- Task: Adding/Updating shortcut ---${NC}"
         if pgrep -x "steam" > /dev/null; then
-            echo -e "${RED}BŁĄD: Steam jest uruchomiony. Zamknij go całkowicie i spróbuj ponownie.${NC}"
+            echo -e "${RED}ERROR: Steam is running. Close it completely and try again.${NC}"
             exit 1
         fi
         "$VENV_PYTHON_BIN" "$CONFIG_SCRIPT_PY" --add
-        echo -e "${GREEN}Sukces. Możesz teraz uruchomić Steam.${NC}"
+        echo -e "${GREEN}Success. You can now launch Steam.${NC}"
         ;;
     set-artwork)
-        echo -e "${GREEN}--- Zadanie: Ustawianie grafik ---${NC}"
+        echo -e "${GREEN}--- Task: Setting artwork ---${NC}"
         if ! pgrep -x "steam" > /dev/null; then
-            echo -e "${RED}BŁĄD: Steam nie jest uruchomiony. Uruchom go i spróbuj ponownie.${NC}"
+            echo -e "${RED}ERROR: Steam is not running. Launch it and try again.${NC}"
             exit 1
         fi
         "$VENV_PYTHON_BIN" "$CONFIG_SCRIPT_PY" --set
-        echo -e "${GREEN}Sukces. Zrestartuj Steam, aby zobaczyć zmiany.${NC}"
+        echo -e "${GREEN}Success. Restart Steam to see changes.${NC}"
         ;;
     *)
-        echo "Użycie: $0 [opcja]"
-        echo "Dostępne opcje:"
-        echo "  add          - Dodaje lub aktualizuje skrót w Steam (wymaga zamkniętego klienta)."
-        echo "  set-artwork  - Ustawia grafiki dla istniejącego skrótu (wymaga uruchomionego klienta)."
+        echo "Usage: $0 [option]"
+        echo "Available options:"
+        echo "  add          - Adds or updates the shortcut in Steam (requires Steam to be closed)."
+        echo "  set-artwork  - Sets artwork for existing shortcut (requires Steam to be running)."
         exit 1
         ;;
 esac

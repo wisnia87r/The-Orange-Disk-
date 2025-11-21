@@ -1,16 +1,42 @@
 # Python
 __pycache__/
-*.pyc
-venv/
+*.py[cod]
+*$py.class
+*.so
+.Python
 *.egg-info/
+dist/
+build/
 
-# Log and debug files
-*.log
-debug_apps.txt
+# Virtual Environment
+venv/
+env/
+ENV/
 
-# User configuration
-.the_orange_disk.conf
-
-# IDE configuration files
-.idea/
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+install.log
+restart.log
+
+# User Configuration
+.the_orange_disk.conf
+.the_orange_disk.task
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
+# Steam Deck specific
+.cache/

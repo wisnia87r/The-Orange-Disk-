@@ -3,41 +3,44 @@
 # This file contains all the configuration constants for the application.
 import os
 
-# --- File Paths ---
-# Path to the configuration file where user settings (like language) are stored.
+# --- Application Info ---
+APP_VERSION = "v1.2.0"  # Version displayed in the application
+
+# --- File Paths & API Keys ---
 CONFIG_PATH = os.path.expanduser("~/.the_orange_disk.conf")
+# IMPORTANT: Replace this with your own SteamGridDB API key
+# Get your free API key at: https://www.steamgriddb.com/profile/preferences/api
+STEAMGRIDDB_API_KEY = "YOUR_API_KEY_HERE"
 
 # --- Internationalization (i18n) System ---
 TRANSLATIONS = {
-    # Main Menu
+    # ... (reszta tłumaczeń bez zmian) ...
     "PLAY_GAME": {"PL": "GRAJ Z PŁYTĄ", "EN": "PLAY FROM DISC"},
     "RIP_DISC": {"PL": "ZGRAJ PŁYTĘ (Kopia)", "EN": "RIP DISC (Backup)"},
     "HOW_TO_USE": {"PL": "Instrukcja", "EN": "How to Use"},
     "ABOUT": {"PL": "O twórcy", "EN": "About"},
     "SETTINGS": {"PL": "Ustawienia", "EN": "Settings"},
     "EXIT": {"PL": "WYJŚCIE", "EN": "EXIT"},
-
-    # Footer
     "SELECT": {"PL": "Wybierz", "EN": "Select"},
     "BACK_FOOTER": {"PL": "Wyjście", "EN": "Back"},
-
-    # How to Use Screen
     "HOW_TO_TITLE": {"PL": "INSTRUKCJA UŻYTKOWANIA", "EN": "HOW TO USE"},
     "HOW_TO_PLAY": {"PL": "GRAJ Z PŁYTĄ: Uruchamia grę bezpośrednio z napędu.", "EN": "PLAY FROM DISC: Launches the game directly from the drive."},
     "HOW_TO_RIP": {"PL": "ZGRAJ PŁYTĘ: Tworzy cyfrową kopię (backup) gry na dysku.", "EN": "RIP DISC: Creates a digital backup of your game on the disk."},
     "HOW_TO_SETTINGS": {"PL": "USTAWIENIA: Zmień język interfejsu.", "EN": "SETTINGS: Change the interface language."},
     "HOW_TO_EXIT": {"PL": "WYJŚCIE: Zamyka aplikację.", "EN": "EXIT: Closes the application."},
-
-    # About Screen
     "ABOUT_TITLE": {"PL": "O TWÓRCY", "EN": "ABOUT"},
     "ABOUT_CREATED_BY": {"PL": "Stworzone przez: wisnia87r", "EN": "Created by: wisnia87r"},
-
-    # Settings Screen
     "SETTINGS_LANGUAGE_PL": {"PL": "Język: Polski", "EN": "Language: Polish"},
     "SETTINGS_LANGUAGE_EN": {"PL": "Język: Angielski", "EN": "Language: English"},
     "SETTINGS_BACK": {"PL": "Powrót", "EN": "Back"},
-
-    # System Messages & Prompts
+    "ARTWORK_SEARCHING": {"PL": "Szukanie okładek...", "EN": "Searching for artwork..."},
+    "ARTWORK_SELECT": {"PL": "Wybierz okładkę", "EN": "Select a cover"},
+    "ARTWORK_ADD_TO_STEAM_PROMPT": {"PL": "Dodać grę do biblioteki Steam?\n(Steam zostanie zrestartowany)", "EN": "Add game to Steam library?\n(Steam will be restarted)"},
+    "ARTWORK_YES": {"PL": "TAK", "EN": "YES"},
+    "ARTWORK_NO": {"PL": "NIE", "EN": "NO"},
+    "ARTWORK_ADDING_TO_STEAM": {"PL": "Dodawanie gry do Steam...", "EN": "Adding game to Steam..."},
+    "ARTWORK_API_KEY_MISSING": {"PL": "Brak klucza API SteamGridDB!\n\nAby włączyć tę funkcję:\n1. Odwiedź steamgriddb.com\n2. Utwórz darmowe konto\n3. Wygeneruj klucz API\n4. Dodaj go do config.py", "EN": "SteamGridDB API Key not configured!\n\nTo enable this feature:\n1. Visit steamgriddb.com\n2. Create a free account\n3. Generate an API key\n4. Add it to config.py"},
+    "ARTWORK_GAME_NOT_FOUND": {"PL": "Nie znaleziono gry w bazie danych.", "EN": "Game not found in the database."},
     "DRIVE_NOT_FOUND_PROMPT": {"PL": "Włóż napęd USB z płytą...", "EN": "Insert USB drive with disc..."},
     "PERMS_REQUIRED": {"PL": "Wymagane uprawnienia. Hasło SUDO:", "EN": "Admin permissions required. SUDO Password:"},
     "FIXING_PERMS": {"PL": "Naprawianie uprawnień...", "EN": "Fixing permissions..."},
@@ -72,13 +75,9 @@ TRANSLATIONS = {
     "APPIMAGE_NOT_FOUND": {"PL": "Nie znaleziono AppImage dla: {name}", "EN": "AppImage not found for: {name}"},
     "LOADING_BG_ERROR": {"PL": "BŁĄD ładowania tła: {e}", "EN": "ERROR loading background: {e}"},
     "FONT_ERROR": {"PL": "Nie znaleziono czcionki 'sans', używam domyślnej.", "EN": "Font 'sans' not found, using default."},
-
-    # Boot Animation
     "BOOT_TITLE": {"PL": "The Orange Disk", "EN": "The Orange Disk"},
     "BOOT_SUBTITLE": {"PL": "Playstation Edition", "EN": "Playstation Edition"},
     "BOOT_SKIP": {"PL": "Pomijanie animacji startowej...", "EN": "Skipping boot animation..."},
-
-    # GUI States
     "LOADING_TITLE": {"PL": "PRACUJĘ...", "EN": "LOADING..."},
     "CANCEL_BUTTON": {"PL": "Anuluj", "EN": "Cancel"},
     "SUCCESS_TITLE": {"PL": "SUKCES", "EN": "SUCCESS"},
@@ -100,6 +99,5 @@ PS1_BLUE = (80, 80, 220)
 PS1_PINK = (220, 80, 220)
 GRAYED_OUT = (80, 80, 90)
 
-# The application is rendered to an internal surface and then scaled up.
 INTERNAL_WIDTH = 1280
 INTERNAL_HEIGHT = 800

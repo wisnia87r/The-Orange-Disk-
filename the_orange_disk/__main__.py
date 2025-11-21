@@ -18,8 +18,9 @@ def main():
         import traceback
         traceback.print_exc()
         print("="*50)
-        # Keep the console open for a moment so the user can see the error
-        input("Press Enter to exit...")
+        # Don't wait for input when running from launcher
+        import sys
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
