@@ -31,58 +31,45 @@ echo ""
 # --- STEP 1: Check for required tools ---
 echo -e "${GREEN}Step 1: Checking for required tools...${NC}"
 
-# Check if curl is available (for downloading)
-if ! command -v curl &> /dev/null; then
-    echo -e "${RED}ERROR: 'curl' is required but not found.${NC}"
-    echo "Please install curl and try again."
-    exit 1
-fi
+check_dependency() {
+    PACKAGE=$1
 
-# Check if unzip is available (for extracting)
-if ! command -v unzip &> /dev/null; then
-    echo -e "${RED}ERROR: 'unzip' is required but not found.${NC}"
-    echo "Please install unzip and try again."
-    exit 1
-fi
-
-# Check if jq is available (for parsing GitHub API response)
-if ! command -v jq &> /dev/null; then
-    echo -e "${YELLOW}WARNING: 'jq' is not installed. Attempting to install it...${NC}"
-
-    # Try to install jq automatically
-    if command -v pacman &> /dev/null; then
-        # Steam Deck / Arch Linux
-        echo "Detected Arch-based system. Installing jq..."
-        if [ -f "/etc/os-release" ] && grep -q "steamdeck" /etc/os-release; then
-            # Steam Deck specific
-            sudo steamos-readonly disable
-            sudo pacman -S jq --noconfirm --needed
-            sudo steamos-readonly enable
+    if ! command -v ${PACKAGE} &> /dev/null; then
+        echo -e "${YELLOW}WARNING: '${PACKAGE}' is not installed. Attempting to install it...${NC}"
+    
+        # Try to install jq automatically
+        if command -v pacman &> /dev/null; then
+            # Steam Deck / Arch Linux
+            echo "Detected Arch-based system. Installing ${PACKAGE}..."
+            if [ -f "/etc/os-release" ] && grep -q "steamdeck" /etc/os-release; then
+                # Steam Deck specific
+                sudo steamos-readonly disable
+                sudo pacman -S ${PACKAGE} --noconfirm --needed
+                sudo steamos-readonly enable
+            else
+                sudo pacman -S ${PACKAGE} --noconfirm --needed
+            fi
+        elif command -v apt-get &> /dev/null; then
+            # Debian/Ubuntu
+            echo "Detected Debian-based system. Installing ${PACKAGE}..."
+            sudo apt-get update && sudo apt-get install -y ${PACKAGE}
+        elif command -v dnf &> /dev/null; then
+            # Fedora
+            echo "Detected Fedora-based system. Installing ${PACKAGE}..."
+            sudo dnf install -y ${PACKAGE}
         else
-            sudo pacman -S jq --noconfirm --needed
+            echo -e "${RED}ERROR: Could not install '${PACKAGE}' automatically.${NC}"
+            echo "Please install it manually and try again."
+            exit 1
         fi
-    elif command -v apt-get &> /dev/null; then
-        # Debian/Ubuntu
-        echo "Detected Debian-based system. Installing jq..."
-        sudo apt-get update && sudo apt-get install -y jq
-    elif command -v dnf &> /dev/null; then
-        # Fedora
-        echo "Detected Fedora-based system. Installing jq..."
-        sudo dnf install -y jq
-    else
-        echo -e "${RED}ERROR: Could not install 'jq' automatically.${NC}"
-        echo "Please install it manually and try again."
-        exit 1
-    fi
+}
 
-    # Verify jq was installed
-    if ! command -v jq &> /dev/null; then
-        echo -e "${RED}ERROR: Failed to install 'jq'.${NC}"
-        exit 1
-    fi
-
-    echo -e "${GREEN}jq installed successfully!${NC}"
-fi
+# Check if curl is available (for downloading)
+check_dependency curl
+# Check if unzip is available (for extracting)
+check_dependency unzip
+# Check if jq is available (for parsing GitHub API response)
+check_dependency jq
 
 echo -e "${GREEN}All required tools are available.${NC}"
 echo ""
